@@ -41,7 +41,7 @@ ls -la /usr/share/cockpit/power-log/
 
 - **Summary banner** — Last shutdown, last wake, overall status, next scheduled shutdown.
 - **Boot/Shutdown history** — Table with boot time, shutdown time, uptime, and wake type classification (RTC wake / immediate wake / manual).
-- **Power log** — Parsed entries from `/var/log/server-scheduler/power.log` showing each nightly cycle with status.
+- **Power log** — Parsed entries from `/var/log/server-scheduler/power.log` showing each nightly cycle with status. Each entry is cross-referenced against boot history — if the server woke within 5 minutes of a shutdown, the entry is flagged as "Omedelbar wake" instead of "Normal shutdown".
 
 ## Configuration
 
@@ -86,6 +86,22 @@ BACKUP_PROCESS="kopia snapshot"
 ```
 
 If Docker is not installed or the container doesn't exist, the backup check is skipped and shutdown proceeds normally.
+
+### Log rotation
+
+The shutdown script automatically truncates `power.log` when it exceeds 1 MB (keeping the last 500 lines). To change the limit, edit `MAX_LOG_BYTES` in `/usr/local/sbin/night-shutdown.sh`.
+
+## Updating
+
+If you already have the plugin installed and want to update to a newer version:
+
+```bash
+cd cockpit-power-log
+git pull
+sudo ./install.sh
+```
+
+Then reload Cockpit in the browser (Ctrl+Shift+R to clear cache).
 
 ## Uninstallation
 
