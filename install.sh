@@ -52,7 +52,8 @@ echo "      -> Timer enabled and started"
 # 5. Create log directory
 echo "[5/5] Creating log directory..."
 mkdir -p /var/log/server-scheduler
-echo "      -> Created /var/log/server-scheduler/"
+chmod 750 /var/log/server-scheduler
+echo "      -> Created /var/log/server-scheduler/ (mode 750)"
 
 echo ""
 echo -e "${GREEN}============================================${NC}"
