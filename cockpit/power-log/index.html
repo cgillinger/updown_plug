@@ -271,6 +271,7 @@
             }
         }
     </style>
+    <script src="../base1/cockpit.js"></script>
 </head>
 <body>
     <h1>Power Log</h1>
@@ -305,8 +306,10 @@
         /* ================================================================
          * Power Log — Cockpit Plugin
          * All data is fetched using cockpit.spawn()
-         * cockpit.js is injected automatically by the Cockpit iframe host
          * ================================================================ */
+
+        // Global boot history used by both the boot table and power log
+        var bootEntries = [];
 
         // ---- Utilities ----
 
@@ -345,9 +348,11 @@
         // ---- Data Loading ----
 
         function loadAll() {
-            loadBootHistory();
-            loadPowerLog();
             loadTimerInfo();
+            // Load boot history first, then power log (needs boot data for cross-reference)
+            loadBootHistory().then(function() {
+                loadPowerLog();
+            });
         }
 
         // ---- Boot / Shutdown History ----
@@ -356,7 +361,7 @@
             var container = document.getElementById("boot-table");
             container.innerHTML = '<div class="loading">Loading boot history...</div>';
 
-            cockpit.spawn(["journalctl", "--list-boots", "--no-pager"], { superuser: "try" })
+            return cockpit.spawn(["journalctl", "--list-boots", "--no-pager"], { superuser: "try" })
                 .then(function(output) {
                     parseBootHistory(output);
                 })
@@ -444,6 +449,9 @@
 
             html += '</tbody></table>';
             container.innerHTML = html;
+
+            // Store globally for power log cross-reference
+            bootEntries = boots;
 
             updateSummaryFromBoots(boots);
         }
@@ -543,6 +551,7 @@
             var statusLabel = "\u2705 Normal shutdown";
             var wakeTime = "";
             var method = "";
+            var shutdownTimestamp = null;
 
             var fullText = block.toLowerCase();
             if (fullText.indexOf("abort") !== -1) {
@@ -556,7 +565,7 @@
                 statusLabel = "\u274C Problem";
             }
 
-            // Extract wake time
+            // Extract wake time and shutdown timestamp
             for (var j = 0; j < lines.length; j++) {
                 var wakeMatch = lines[j].match(/Wake set for next (\S+)\s+\(epoch\s+(\d+)\)/);
                 if (wakeMatch) {
@@ -567,9 +576,37 @@
                 } else if (lines[j].indexOf("shutdown") !== -1 && lines[j].indexOf("Shutdown sequence") === -1) {
                     method = "shutdown";
                 }
+                // Capture the timestamp of the "Powering off" line for cross-reference
+                if (lines[j].indexOf("Powering off") !== -1) {
+                    var tsMatch = lines[j].match(/^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/);
+                    if (tsMatch) {
+                        shutdownTimestamp = new Date(tsMatch[1].replace(" ", "T"));
+                    }
+                }
             }
 
             if (!method && status === "normal") method = "rtcwake";
+
+            // Cross-reference with boot history: if the next boot after this
+            // shutdown was within 5 minutes, the RTC wake failed or the server
+            // rebooted immediately — override status to flag the problem.
+            if (shutdownTimestamp && status === "normal" && bootEntries.length > 0) {
+                var nextBoot = null;
+                for (var k = 0; k < bootEntries.length; k++) {
+                    if (bootEntries[k].bootTime > shutdownTimestamp) {
+                        if (!nextBoot || bootEntries[k].bootTime < nextBoot.bootTime) {
+                            nextBoot = bootEntries[k];
+                        }
+                    }
+                }
+                if (nextBoot) {
+                    var diffMin = (nextBoot.bootTime - shutdownTimestamp) / 60000;
+                    if (diffMin >= 0 && diffMin <= 5) {
+                        status = "error";
+                        statusLabel = "\u26A0 Omedelbar wake (" + Math.round(diffMin) + " min efter shutdown)";
+                    }
+                }
+            }
 
             var html = '<div class="log-entry">';
             html += '<div class="log-entry-header">';
