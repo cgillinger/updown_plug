@@ -1,0 +1,9 @@
+[Unit]
+Description=Nightly shutdown timer
+
+[Timer]
+OnCalendar=03:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

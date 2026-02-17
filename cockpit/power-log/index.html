@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Power Log</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "RedHatText", "Open Sans", Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            color: #151515;
+            background: #f0f0f0;
+            padding: 16px 24px;
+            line-height: 1.5;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 400;
+            margin-bottom: 16px;
+            color: #151515;
+        }
+
+        h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #151515;
+        }
+
+        /* Summary banner */
+        .summary-banner {
+            background: #fff;
+            border: 1px solid #d2d2d2;
+            border-radius: 3px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+            min-width: 180px;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6a6e73;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .summary-value {
+            font-size: 15px;
+            color: #151515;
+        }
+
+        .status-ok {
+            color: #3e8635;
+        }
+
+        .status-warn {
+            color: #f0ab00;
+        }
+
+        .status-error {
+            color: #c9190b;
+        }
+
+        /* Cards / panels */
+        .panel {
+            background: #fff;
+            border: 1px solid #d2d2d2;
+            border-radius: 3px;
+            margin-bottom: 20px;
+        }
+
+        .panel-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid #d2d2d2;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-body {
+            padding: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 10px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6a6e73;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #fafafa;
+            border-bottom: 1px solid #d2d2d2;
+        }
+
+        tbody td {
+            padding: 10px 20px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #f5f5f5;
+        }
+
+        /* Power log cards */
+        .log-entry {
+            padding: 14px 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-entry-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .log-entry-date {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .log-entry-status {
+            font-size: 13px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .log-entry-status.normal {
+            background: #e7f5e2;
+            color: #3e8635;
+        }
+
+        .log-entry-status.aborted {
+            background: #fdf0e2;
+            color: #c58c00;
+        }
+
+        .log-entry-status.error {
+            background: #fce8e8;
+            color: #c9190b;
+        }
+
+        .log-entry-details {
+            font-size: 13px;
+            color: #6a6e73;
+            margin-left: 2px;
+        }
+
+        .log-entry-details span {
+            margin-right: 16px;
+        }
+
+        /* Wake type badges */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-ok {
+            background: #e7f5e2;
+            color: #3e8635;
+        }
+
+        .badge-warn {
+            background: #fce8e8;
+            color: #c9190b;
+        }
+
+        .badge-neutral {
+            background: #f0f0f0;
+            color: #6a6e73;
+        }
+
+        /* Loading spinner */
+        .loading {
+            padding: 40px;
+            text-align: center;
+            color: #6a6e73;
+        }
+
+        .loading::before {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d2d2d2;
+            border-top-color: #06c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-msg {
+            padding: 16px 20px;
+            color: #c9190b;
+            font-size: 13px;
+        }
+
+        /* Refresh button */
+        .btn-refresh {
+            background: none;
+            border: 1px solid #d2d2d2;
+            border-radius: 3px;
+            padding: 4px 12px;
+            font-size: 13px;
+            color: #151515;
+            cursor: pointer;
+        }
+
+        .btn-refresh:hover {
+            background: #f0f0f0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            thead th, tbody td {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            .summary-banner {
+                gap: 16px;
+                padding: 12px 16px;
+            }
+            .summary-item {
+                min-width: 140px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Power Log</h1>
+
+    <!-- Summary Banner -->
+    <div class="summary-banner" id="summary-banner">
+        <div class="loading">Loading summary...</div>
+    </div>
+
+    <!-- Boot/Shutdown History -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Boot / Shutdown History</h2>
+            <button class="btn-refresh" onclick="loadAll()" title="Refresh">&#8635; Refresh</button>
+        </div>
+        <div class="panel-body" id="boot-table">
+            <div class="loading">Loading boot history...</div>
+        </div>
+    </div>
+
+    <!-- Power Log -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Power Log</h2>
+        </div>
+        <div class="panel-body" id="power-log">
+            <div class="loading">Loading power log...</div>
+        </div>
+    </div>
+
+    <script>
+        /* ================================================================
+         * Power Log — Cockpit Plugin
+         * All data is fetched using cockpit.spawn()
+         * cockpit.js is injected automatically by the Cockpit iframe host
+         * ================================================================ */
+
+        // ---- Utilities ----
+
+        function escapeHtml(str) {
+            var d = document.createElement("div");
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function formatDateTime(dateStr) {
+            if (!dateStr) return "—";
+            var d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString("sv-SE") + " " + d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+        }
+
+        function formatDuration(ms) {
+            if (!ms || ms < 0) return "—";
+            var totalMin = Math.floor(ms / 60000);
+            var days = Math.floor(totalMin / 1440);
+            var hours = Math.floor((totalMin % 1440) / 60);
+            var mins = totalMin % 60;
+            var parts = [];
+            if (days > 0) parts.push(days + "d");
+            if (hours > 0) parts.push(hours + "h");
+            parts.push(mins + "m");
+            return parts.join(" ");
+        }
+
+        function epochToReadable(epoch) {
+            var d = new Date(parseInt(epoch, 10) * 1000);
+            if (isNaN(d.getTime())) return epoch;
+            return d.toLocaleDateString("sv-SE") + " " + d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+        }
+
+        // ---- Data Loading ----
+
+        function loadAll() {
+            loadBootHistory();
+            loadPowerLog();
+            loadTimerInfo();
+        }
+
+        // ---- Boot / Shutdown History ----
+
+        function loadBootHistory() {
+            var container = document.getElementById("boot-table");
+            container.innerHTML = '<div class="loading">Loading boot history...</div>';
+
+            cockpit.spawn(["journalctl", "--list-boots", "--no-pager"], { superuser: "try" })
+                .then(function(output) {
+                    parseBootHistory(output);
+                })
+                .catch(function(err) {
+                    container.innerHTML = '<div class="error-msg">Failed to load boot history: ' + escapeHtml(String(err)) + '</div>';
+                });
+        }
+
+        function parseBootHistory(output) {
+            var container = document.getElementById("boot-table");
+            var lines = output.trim().split("\n").filter(function(l) { return l.trim().length > 0; });
+
+            if (lines.length === 0) {
+                container.innerHTML = '<div class="error-msg">No boot records found.</div>';
+                return;
+            }
+
+            // Parse boot entries: each line like " -1 abc123 Mon 2026-02-16 07:00:12 CET—Mon 2026-02-16 23:00:00 CET"
+            // or "  0 abc123 Mon 2026-02-17 07:00:05 CET—Mon 2026-02-17 09:15:00 CET"
+            var boots = [];
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i].trim();
+                // Match the boot index, ID, and the two timestamps separated by em-dash or hyphen variants
+                // Format: IDX BOOTID WEEKDAY YYYY-MM-DD HH:MM:SS TZ—WEEKDAY YYYY-MM-DD HH:MM:SS TZ
+                var match = line.match(/^\s*(-?\d+)\s+(\S+)\s+\S+\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+\S+[\s\u2014—-]+\S+\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+\S+/);
+                if (match) {
+                    boots.push({
+                        index: parseInt(match[1], 10),
+                        bootTime: new Date(match[3].replace(" ", "T")),
+                        shutdownTime: new Date(match[4].replace(" ", "T"))
+                    });
+                }
+            }
+
+            // Sort by boot time descending (most recent first)
+            boots.sort(function(a, b) { return b.bootTime - a.bootTime; });
+
+            // Limit to last 14 days / max 20 entries
+            var cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - 14);
+            boots = boots.filter(function(b) { return b.bootTime >= cutoff; });
+            boots = boots.slice(0, 20);
+
+            if (boots.length === 0) {
+                container.innerHTML = '<div class="error-msg">No boot records found in the last 14 days.</div>';
+                updateSummaryFromBoots([]);
+                return;
+            }
+
+            // Determine wake type by comparing with previous boot's shutdown
+            // boots is sorted most-recent first, so boots[i+1] is the previous boot
+            for (var j = 0; j < boots.length; j++) {
+                var boot = boots[j];
+                var prevShutdown = (j + 1 < boots.length) ? boots[j + 1].shutdownTime : null;
+                boot.wakeType = classifyWake(boot.bootTime, prevShutdown);
+            }
+
+            // Build table
+            var html = '<table><thead><tr>' +
+                '<th>Boot Time</th>' +
+                '<th>Shutdown Time</th>' +
+                '<th>Uptime</th>' +
+                '<th>Wake Type</th>' +
+                '</tr></thead><tbody>';
+
+            for (var k = 0; k < boots.length; k++) {
+                var b = boots[k];
+                var uptime = b.shutdownTime - b.bootTime;
+                // If this is the current boot (index 0), shutdown time is "now" (still running)
+                var shutdownStr;
+                if (b.index === 0) {
+                    shutdownStr = "(running)";
+                    uptime = new Date() - b.bootTime;
+                } else {
+                    shutdownStr = formatDateTime(b.shutdownTime);
+                }
+
+                html += '<tr>' +
+                    '<td>' + formatDateTime(b.bootTime) + '</td>' +
+                    '<td>' + shutdownStr + '</td>' +
+                    '<td>' + formatDuration(uptime) + '</td>' +
+                    '<td>' + wakeTypeBadge(b.wakeType) + '</td>' +
+                    '</tr>';
+            }
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+
+            updateSummaryFromBoots(boots);
+        }
+
+        function classifyWake(bootTime, prevShutdownTime) {
+            if (!prevShutdownTime) return "unknown";
+
+            var diffMs = bootTime - prevShutdownTime;
+            var diffMin = diffMs / 60000;
+
+            // If boot within 2 minutes of previous shutdown → immediate wake
+            if (diffMin >= 0 && diffMin <= 2) {
+                return "immediate";
+            }
+
+            // If boot is near 07:00 (±10 min) → RTC wake
+            var bootHour = bootTime.getHours();
+            var bootMinute = bootTime.getMinutes();
+            var minuteOfDay = bootHour * 60 + bootMinute;
+            // 07:00 = 420 minutes, ±10 = 410..430
+            if (minuteOfDay >= 410 && minuteOfDay <= 430) {
+                return "rtc";
+            }
+
+            return "manual";
+        }
+
+        function wakeTypeBadge(type) {
+            switch (type) {
+                case "rtc":
+                    return '<span class="badge badge-ok">\u2713 RTC wake</span>';
+                case "immediate":
+                    return '<span class="badge badge-warn">\u26A0 Omedelbar wake</span>';
+                case "manual":
+                    return '<span class="badge badge-neutral">Manuell</span>';
+                default:
+                    return '<span class="badge badge-neutral">\u2014</span>';
+            }
+        }
+
+        // ---- Power Log ----
+
+        function loadPowerLog() {
+            var container = document.getElementById("power-log");
+            container.innerHTML = '<div class="loading">Loading power log...</div>';
+
+            cockpit.spawn(["tail", "-200", "/var/log/server-scheduler/power.log"], { superuser: "try", err: "ignore" })
+                .then(function(output) {
+                    parsePowerLog(output);
+                })
+                .catch(function() {
+                    container.innerHTML = '<div class="error-msg">Could not read /var/log/server-scheduler/power.log. The log file may not exist yet.</div>';
+                });
+        }
+
+        function parsePowerLog(output) {
+            var container = document.getElementById("power-log");
+            if (!output || output.trim().length === 0) {
+                container.innerHTML = '<div class="error-msg">Power log is empty.</div>';
+                return;
+            }
+
+            // Split into blocks separated by "----"
+            var blocks = output.split(/^----$/m).filter(function(b) { return b.trim().length > 0; });
+
+            // Reverse so most recent is first
+            blocks.reverse();
+
+            // Limit to 20 entries
+            blocks = blocks.slice(0, 20);
+
+            if (blocks.length === 0) {
+                container.innerHTML = '<div class="error-msg">No log entries found.</div>';
+                return;
+            }
+
+            var html = "";
+            for (var i = 0; i < blocks.length; i++) {
+                html += renderLogBlock(blocks[i].trim());
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderLogBlock(block) {
+            var lines = block.split("\n").filter(function(l) { return l.trim().length > 0; });
+            if (lines.length === 0) return "";
+
+            // Extract date from first line
+            var dateMatch = lines[0].match(/^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s+\S+)/);
+            var dateStr = dateMatch ? dateMatch[1] : "Unknown date";
+            // Just the date portion
+            var justDate = dateStr.split(" ")[0];
+
+            // Determine status
+            var status = "normal";
+            var statusLabel = "\u2705 Normal shutdown";
+            var wakeTime = "";
+            var method = "";
+
+            var fullText = block.toLowerCase();
+            if (fullText.indexOf("abort") !== -1) {
+                status = "aborted";
+                statusLabel = "\u26A0 Avbruten (backup aktiv)";
+            } else if (fullText.indexOf("powering off") !== -1) {
+                status = "normal";
+                statusLabel = "\u2705 Normal shutdown";
+            } else if (fullText.indexOf("error") !== -1 || fullText.indexOf("fail") !== -1) {
+                status = "error";
+                statusLabel = "\u274C Problem";
+            }
+
+            // Extract wake time
+            for (var j = 0; j < lines.length; j++) {
+                var wakeMatch = lines[j].match(/Wake set for next (\S+)\s+\(epoch\s+(\d+)\)/);
+                if (wakeMatch) {
+                    wakeTime = wakeMatch[1] + " (" + epochToReadable(wakeMatch[2]) + ")";
+                }
+                if (lines[j].indexOf("rtcwake") !== -1) {
+                    method = "rtcwake";
+                } else if (lines[j].indexOf("shutdown") !== -1 && lines[j].indexOf("Shutdown sequence") === -1) {
+                    method = "shutdown";
+                }
+            }
+
+            if (!method && status === "normal") method = "rtcwake";
+
+            var html = '<div class="log-entry">';
+            html += '<div class="log-entry-header">';
+            html += '<span class="log-entry-date">' + escapeHtml(justDate) + '</span>';
+            html += '<span class="log-entry-status ' + status + '">' + statusLabel + '</span>';
+            html += '</div>';
+
+            html += '<div class="log-entry-details">';
+            if (wakeTime) {
+                html += '<span>Wake: ' + escapeHtml(wakeTime) + '</span>';
+            }
+            if (method) {
+                html += '<span>Metod: ' + escapeHtml(method) + '</span>';
+            }
+            html += '</div>';
+            html += '</div>';
+
+            return html;
+        }
+
+        // ---- Timer Info ----
+
+        function loadTimerInfo() {
+            cockpit.spawn(["systemctl", "list-timers", "night-shutdown.timer", "--no-pager"], { superuser: "try" })
+                .then(function(output) {
+                    parseTimerInfo(output);
+                })
+                .catch(function() {
+                    // Timer might not be installed
+                    updateTimerSummary(null);
+                });
+        }
+
+        function parseTimerInfo(output) {
+            // Parse the next trigger time from systemctl list-timers output
+            // Format: NEXT                         LEFT          LAST                         PASSED       UNIT                    ACTIVATES
+            var lines = output.trim().split("\n");
+            var nextTrigger = null;
+
+            for (var i = 0; i < lines.length; i++) {
+                if (lines[i].indexOf("night-shutdown") !== -1) {
+                    // Try to extract the NEXT column (first datetime in the line)
+                    var match = lines[i].match(/\S+\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/);
+                    if (match) {
+                        nextTrigger = match[1];
+                    }
+                }
+            }
+
+            updateTimerSummary(nextTrigger);
+        }
+
+        // ---- Summary ----
+
+        var summaryData = {
+            lastShutdown: null,
+            lastBoot: null,
+            overallStatus: null,
+            nextShutdown: null
+        };
+
+        function updateSummaryFromBoots(boots) {
+            if (boots.length >= 1) {
+                summaryData.lastBoot = boots[0].bootTime;
+                if (boots.length >= 2) {
+                    summaryData.lastShutdown = boots[1].shutdownTime;
+                }
+
+                // Check for immediate wake
+                if (boots[0].wakeType === "immediate") {
+                    summaryData.overallStatus = "warn";
+                } else if (boots[0].wakeType === "rtc") {
+                    summaryData.overallStatus = "ok";
+                } else {
+                    summaryData.overallStatus = "neutral";
+                }
+            }
+            renderSummary();
+        }
+
+        function updateTimerSummary(nextTrigger) {
+            summaryData.nextShutdown = nextTrigger;
+            renderSummary();
+        }
+
+        function renderSummary() {
+            var banner = document.getElementById("summary-banner");
+            var html = "";
+
+            // Last shutdown
+            html += '<div class="summary-item">';
+            html += '<span class="summary-label">Senaste shutdown</span>';
+            html += '<span class="summary-value">' + (summaryData.lastShutdown ? formatDateTime(summaryData.lastShutdown) : "—") + '</span>';
+            html += '</div>';
+
+            // Last boot / wake
+            html += '<div class="summary-item">';
+            html += '<span class="summary-label">Senaste wake</span>';
+            html += '<span class="summary-value">' + (summaryData.lastBoot ? formatDateTime(summaryData.lastBoot) : "—") + '</span>';
+            html += '</div>';
+
+            // Status
+            html += '<div class="summary-item">';
+            html += '<span class="summary-label">Status</span>';
+            if (summaryData.overallStatus === "ok") {
+                html += '<span class="summary-value status-ok">\u2705 Normal cykel</span>';
+            } else if (summaryData.overallStatus === "warn") {
+                html += '<span class="summary-value status-error">\u26A0 Problem \u2014 servern vaknade direkt</span>';
+            } else {
+                html += '<span class="summary-value">\u2014</span>';
+            }
+            html += '</div>';
+
+            // Next shutdown
+            html += '<div class="summary-item">';
+            html += '<span class="summary-label">N\u00e4sta shutdown</span>';
+            html += '<span class="summary-value">' + (summaryData.nextShutdown ? escapeHtml(summaryData.nextShutdown) : "—") + '</span>';
+            html += '</div>';
+
+            banner.innerHTML = html;
+        }
+
+        // ---- Init ----
+        loadAll();
+    </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+    "version": 0,
+    "tools": {
+        "power-log": {
+            "label": "Power Log",
+            "path": "index.html",
+            "keywords": [
+                {
+                    "matches": ["power", "shutdown", "wake", "backup", "rtc", "uptime"]
+                }
+            ]
+        }
+    },
+    "content-security-policy": "default-src 'self' 'unsafe-inline' 'unsafe-eval'"
+}

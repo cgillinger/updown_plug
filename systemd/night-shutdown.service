@@ -1,0 +1,6 @@
+[Unit]
+Description=Nightly controlled shutdown with RTC wake
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/night-shutdown.sh
