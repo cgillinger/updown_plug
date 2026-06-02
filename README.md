@@ -2,6 +2,8 @@
 
 A Cockpit plugin that displays server shutdown/wake history and nightly backup status in a clean dashboard.
 
+> This is a personal hobby project I build for my own use and publish in case it's useful to someone else. I work on it in my spare time, so issues and PRs are welcome but replies may be slow. Use at your own risk.
+
 ![Screenshot placeholder](screenshot.png)
 
 ## Requirements
